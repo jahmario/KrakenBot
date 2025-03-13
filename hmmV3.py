@@ -1,7 +1,7 @@
 import os
 import time
 import json
-import simpleaudio as sa
+#import simpleaudio as sa
 import hmac
 import hashlib
 import base64
@@ -830,14 +830,14 @@ class InstitutionalFlowBotKrakenFutures:
 
   
 
-    def play_shopify_sound(self):
-        try:
-            sound_file = "KrakenBot/kraken-futures-bot/shopify_sale_sound.wav"  # Ensure the file path is correct
-            wave_obj = sa.WaveObject.from_wave_file(sound_file)
-            play_obj = wave_obj.play()
-            play_obj.wait_done()  # Wait for the sound to finish playing
-        except Exception as e:
-            print(f"⚠️ Error playing sound: {e}")
+  #  def play_shopify_sound(self):
+     #   try:
+      #      sound_file = "KrakenBot/kraken-futures-bot/shopify_sale_sound.wav"  # Ensure the file path is correct
+       #     wave_obj = sa.WaveObject.from_wave_file(sound_file)
+      #      play_obj = wave_obj.play()
+       #     play_obj.wait_done()  # Wait for the sound to finish playing
+        #except Exception as e:
+        #    print(f"⚠️ Error playing sound: {e}")
 
 
     async def place_trade(self, symbol, side, price):
@@ -898,7 +898,7 @@ class InstitutionalFlowBotKrakenFutures:
         logging.info(f"✅ Placed {side.upper()} order for {symbol} at {price} (TP={tp_price})")
 
         # **📢 Play Shopify sound when trade is placed**
-        self.play_shopify_sound()
+        #self.play_shopify_sound()
 
         self.portfolio[symbol] = {"type": side, "price": price, "txid": order_txid}
         self.trade_count += 1
