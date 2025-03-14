@@ -1,7 +1,7 @@
 import os
 import time
 import json
-#import simpleaudio as sa
+import simpleaudio as sa
 import hmac
 import hashlib
 import base64
@@ -112,7 +112,7 @@ def calculate_lunar_midpoints():
 
 
 #  --- NEW: Minute Cycle Encoding Function ---
-def encode_minute_cycle(dt, period=30):
+def encode_minute_cycle(dt, period=60):
     """
     Encodes the current minute-of-day in a cyclical fashion.
     period: period in minutes (e.g. 5 for a 5‑minute cycle).
@@ -129,7 +129,7 @@ def encode_planetary_hour(hour_numeric):
     hour_rad = (hour_numeric / 24) * 2 * np.pi
     return np.sin(hour_rad), np.cos(hour_rad)
 
-def simulate_trade_durations(df, target_percent=0.00720, max_lookahead=60):
+def simulate_trade_durations(df, target_percent=0.00777, max_lookahead=60):
     df = df.sort_index()
     results = []
     for symbol, group in df.groupby('symbol'):
@@ -251,19 +251,19 @@ def apply_indicators(df):
     df['3_EMA'] = df['close'].ewm(span=3, adjust=False).mean()
     df['5_EMA'] = df['close'].ewm(span=5, adjust=False).mean()
     df['8_EMA'] = df['close'].ewm(span=8, adjust=False).mean()
-    df['ema_comparison'] = (df['3_EMA'] > df['5_EMA']).astype(int)
+    df['ema_comparison'] = (df['3_EMA'] > df['8_EMA']).astype(int)
     delta = df['close'].diff()
     gain = delta.where(delta > 0, 0)
     loss = -delta.where(delta < 0, 0)
-    avg_gain = gain.rolling(window=45, min_periods=45).mean()
-    avg_loss = loss.rolling(window=45, min_periods=45).mean().replace(0, 1e-8)
+    avg_gain = gain.rolling(window=50, min_periods=50).mean()
+    avg_loss = loss.rolling(window=50, min_periods=50).mean().replace(0, 1e-8)
     df['rsi_5'] = 100 - (100 / (1 + avg_gain / avg_loss))
-    df['ATR'] = (df['high'] - df['low']).rolling(window=45, min_periods=45).mean()
+    df['ATR'] = (df['high'] - df['low']).rolling(window=50, min_periods=50).mean()
     df['vwap'] = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
-    df['volume_ma'] = df['volume'].rolling(window=45).mean()
+    df['volume_ma'] = df['volume'].rolling(window=50).mean()
     df['volume_spike'] = (df['volume'] > df['volume_ma']).astype(int)
-    df['stoch_rsi'] = (df['rsi_5'] - df['rsi_5'].rolling(window=45).min()) / (
-        df['rsi_5'].rolling(window=45).max() - df['rsi_5'].rolling(window=45).min())
+    df['stoch_rsi'] = (df['rsi_5'] - df['rsi_5'].rolling(window=50).min()) / (
+    df['rsi_5'].rolling(window=50).max() - df['rsi_5'].rolling(window=50).min())
     df['close_minus_open'] = df['close'] - df['open']
     df['high_minus_low'] = df['high'] - df['low']
     df['close_pct_change'] = df['close'].pct_change().fillna(0)
@@ -271,9 +271,9 @@ def apply_indicators(df):
     df['obv'] = ((df['close'] - df['close'].shift(1)) * df['volume']).cumsum()
     df['obv_momentum_shift'] = df['obv'].diff().fillna(0)
     df['heikin_ashi_trend'] = ((df['close'] + df['open']) / 2).diff().fillna(0)
-    df['100_EMA'] = df['close'].ewm(span=45, adjust=False).mean()
+    df['100_EMA'] = df['close'].ewm(span=50, adjust=False).mean()
     df['trend_filter'] = (df['close'] > df['100_EMA']).astype(int)
-    df['SMA_100'] = df['close'].rolling(window=15).mean()
+    df['SMA_100'] = df['close'].rolling(window=50).mean()
     df['SMA_15'] = df['close'].rolling(window=5).mean()
     return df.fillna(0)
 
@@ -338,7 +338,7 @@ def load_training_data(pairs, interval=1):
     if dfs:
         df_all = pd.concat(dfs, ignore_index=True)
         df_all.index = pd.to_datetime(df_all.index)
-        df_all = simulate_trade_durations(df_all, target_percent=0.00720, max_lookahead=60)
+        df_all = simulate_trade_durations(df_all, target_percent=0.0076, max_lookahead=60)
         return df_all
     else:
         return pd.DataFrame()
@@ -707,19 +707,19 @@ class InstitutionalFlowBotKrakenFutures:
         df['3_EMA'] = df['close'].ewm(span=3, adjust=False).mean()
         df['5_EMA'] = df['close'].ewm(span=5, adjust=False).mean()
         df['8_EMA'] = df['close'].ewm(span=8, adjust=False).mean()
-        df['ema_comparison'] = (df['3_EMA'] > df['5_EMA']).astype(int)
+        df['ema_comparison'] = (df['3_EMA'] > df['8_EMA']).astype(int)
         delta = df['close'].diff()
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
-        avg_gain = gain.rolling(window=45, min_periods=45).mean()
-        avg_loss = loss.rolling(window=45, min_periods=45).mean().replace(0, 1e-8)
+        avg_gain = gain.rolling(window=50, min_periods=50).mean()
+        avg_loss = loss.rolling(window=50, min_periods=50).mean().replace(0, 1e-8)
         df['rsi_5'] = 100 - (100 / (1 + avg_gain / avg_loss))
-        df['ATR'] = (df['high'] - df['low']).rolling(window=45, min_periods=45).mean()
+        df['ATR'] = (df['high'] - df['low']).rolling(window=50, min_periods=50).mean()
         df['vwap'] = (df['close'] * df['volume']).cumsum() / df['volume'].cumsum()
-        df['volume_ma'] = df['volume'].rolling(window=45).mean()
+        df['volume_ma'] = df['volume'].rolling(window=50).mean()
         df['volume_spike'] = (df['volume'] > df['volume_ma']).astype(int)
-        df['stoch_rsi'] = (df['rsi_5'] - df['rsi_5'].rolling(window=45).min()) / (
-        df['rsi_5'].rolling(window=45).max() - df['rsi_5'].rolling(window=45).min())
+        df['stoch_rsi'] = (df['rsi_5'] - df['rsi_5'].rolling(window=50).min()) / (
+        df['rsi_5'].rolling(window=50).max() - df['rsi_5'].rolling(window=50).min())
         df['close_minus_open'] = df['close'] - df['open']
         df['high_minus_low'] = df['high'] - df['low']
         df['close_pct_change'] = df['close'].pct_change().fillna(0)
@@ -729,7 +729,7 @@ class InstitutionalFlowBotKrakenFutures:
         df['heikin_ashi_trend'] = ((df['close'] + df['open']) / 2).diff().fillna(0)
         df['100_EMA'] = df['close'].ewm(span=50, adjust=False).mean()
         df['trend_filter'] = (df['close'] > df['100_EMA']).astype(int)
-        df['SMA_100'] = df['close'].rolling(window=10).mean()
+        df['SMA_100'] = df['close'].rolling(window=50).mean()
         df['SMA_15'] = df['close'].rolling(window=5).mean()
         return df.fillna(0)
 
@@ -830,14 +830,14 @@ class InstitutionalFlowBotKrakenFutures:
 
   
 
-  #  def play_shopify_sound(self):
-     #   try:
-      #      sound_file = "KrakenBot/kraken-futures-bot/shopify_sale_sound.wav"  # Ensure the file path is correct
-       #     wave_obj = sa.WaveObject.from_wave_file(sound_file)
-      #      play_obj = wave_obj.play()
-       #     play_obj.wait_done()  # Wait for the sound to finish playing
-        #except Exception as e:
-        #    print(f"⚠️ Error playing sound: {e}")
+    def play_shopify_sound(self):
+        try:
+            sound_file = "KrakenBot/kraken-futures-bot/shopify_sale_sound.wav"  # Ensure the file path is correct
+            wave_obj = sa.WaveObject.from_wave_file(sound_file)
+            play_obj = wave_obj.play()
+            play_obj.wait_done()  # Wait for the sound to finish playing
+        except Exception as e:
+            print(f"⚠️ Error playing sound: {e}")
 
 
     async def place_trade(self, symbol, side, price):
@@ -860,7 +860,7 @@ class InstitutionalFlowBotKrakenFutures:
             return
 
         precision = self.get_asset_price_precision(symbol)
-        tp_multiplier = 0.0072  # default take-profit multiplier
+        tp_multiplier = 0.0075  # default take-profit multiplier
 
         # Adjust take-profit price and calculate net profit based on trade side
         if side == "buy":
@@ -898,7 +898,7 @@ class InstitutionalFlowBotKrakenFutures:
         logging.info(f"✅ Placed {side.upper()} order for {symbol} at {price} (TP={tp_price})")
 
         # **📢 Play Shopify sound when trade is placed**
-        #self.play_shopify_sound()
+        self.play_shopify_sound()
 
         self.portfolio[symbol] = {"type": side, "price": price, "txid": order_txid}
         self.trade_count += 1
